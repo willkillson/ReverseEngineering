@@ -16,8 +16,8 @@ int main() {
 	std::string varString = "DefaultString";
 	char arrChar[128] = "Long char array right here ->";
 	int *ptr2int = &varInt;
-	int *ptr2ptr = ptr2int;
-	int *ptr2ptr2ptr = ptr2ptr;
+	int **ptr2ptr = &ptr2int;
+	int ***ptr2ptr2ptr = &ptr2ptr;
 
 
 
@@ -25,11 +25,11 @@ int main() {
 
 
 		std::cout << "Process ID: " << GetCurrentProcessId() << std::endl << std::endl;
-		std::cout << "varInt" <<'\t' << "(0x" << &varInt << ") = "<< varInt << std::endl;
-		std::cout << "varString" << '\t' << "(0x" << &varString << ") = " << varString.c_str() << std::endl;
-		std::cout << "arrChar" << '\t' << "(0x" << &arrChar << ") = " << arrChar << std::endl;
-		std::cout << "ptr2int" << '\t' << "(0x" << &ptr2int << ") = " << ptr2int << std::endl;
-		std::cout << "ptr2ptr" << '\t' << "(0x" << &ptr2ptr << ") = " << ptr2ptr << std::endl;
+		std::cout << "varInt     " <<'\t' << "(0x" << &varInt << ") = "<< varInt << std::endl;
+		std::cout << "varString  " << '\t' << "(0x" << &varString << ") = " << varString.c_str() << std::endl;
+		std::cout << "arrChar    " << '\t' << "(0x" << &arrChar << ") = " << arrChar << std::endl;
+		std::cout << "ptr2int    " << '\t' << "(0x" << &ptr2int << ") = " << ptr2int << std::endl;
+		std::cout << "ptr2ptr    " << '\t' << "(0x" << &ptr2ptr << ") = " << ptr2ptr << std::endl;
 		std::cout << "ptr2ptr2ptr" << '\t' << "(0x" << &ptr2ptr2ptr << ") = " << ptr2ptr2ptr << std::endl << std::endl;
 
 		std::cout << "Press ENTER to print again" << '\n' << '\n' << '\n'<<"------------------------------------------" << '\n';
