@@ -25,12 +25,12 @@ int main() {
 
 
 		std::cout << "Process ID: " << GetCurrentProcessId() << std::endl << std::endl;
-		std::cout << "varInt     " << '\t' << "(0x" << &varInt << ") = " << varInt << std::endl;
-		std::cout << "varString  " << '\t' << "(0x" << &varString << ") = " << varString.c_str() << std::endl;
-		std::cout << "arrChar    " << '\t' << "(0x" << &arrChar << ") = " << arrChar << std::endl;
-		std::cout << "ptr2int    " << '\t' << "(0x" << &ptr2int << ") = " << ptr2int << std::endl;
-		std::cout << "ptr2ptr    " << '\t' << "(0x" << &ptr2ptr << ") = " << ptr2ptr << std::endl;
-		std::cout << "ptr2ptr2ptr" << '\t' << "(0x" << &ptr2ptr2ptr << ") = " << ptr2ptr2ptr << std::endl << std::endl;
+		std::cout << "varInt     " << '\t' << "(0x" << std::hex << &varInt << ") = "		 << std::dec << varInt << std::endl;
+		std::cout << "varString  " << '\t' << "(0x" << std::hex << &varString << ") = "		 << std::dec << varString.c_str() << std::endl;
+		std::cout << "arrChar    " << '\t' << "(0x" << std::hex << &arrChar << ") = "		 << std::dec << arrChar << std::endl;
+		std::cout << "ptr2int    " << '\t' << "(0x" << std::hex << &ptr2int << ") = "		 << std::dec << ptr2int << std::endl;
+		std::cout << "ptr2ptr    " << '\t' << "(0x" << std::hex << &ptr2ptr << ") = "		 << std::dec << ptr2ptr << std::endl;
+		std::cout << "ptr2ptr2ptr" << '\t' << "(0x" << std::hex << &ptr2ptr2ptr << ") = "    << std::dec << ptr2ptr2ptr << std::endl << std::endl;
 
 		std::cout << "Press ENTER to print again" << '\n' << '\n' << '\n' << "------------------------------------------" << '\n';
 

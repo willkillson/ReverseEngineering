@@ -2,6 +2,25 @@
 #include <Windows.h>
 
 
+DWORD  findPointerAddress(int PointerLevel, HANDLE hProcess, DWORD  offsets[], DWORD  BaseAddress)
+{
+	DWORD  pointerAddress;
+	DWORD  pointerTemp;
+
+	for (int i = 0; i < PointerLevel; i++)
+	{
+		if (i == 0)
+			ReadProcessMemory(hProcess, (LPCVOID)BaseAddress, &pointerTemp, sizeof(pointerTemp), NULL);
+
+
+		pointerAddress = pointerTemp + offsets[i];
+		std::cout << "Ptr - " << i << " " << pointerAddress << std::endl;
+		ReadProcessMemory(hProcess, (LPCVOID)pointerAddress, &pointerTemp, sizeof(pointerTemp), NULL);
+	}
+	return pointerAddress;
+}
+
+
 int main() {
 
 		int pid = 0;
@@ -14,6 +33,9 @@ int main() {
 		int *ptr2intRead = NULL;
 		int **ptr2ptrRead = NULL;
 		int ***ptr2ptr2ptrRead = NULL;
+		DWORD valueToRead = NULL;
+
+
 
 	
 			int answer = -1;//menu
@@ -25,8 +47,9 @@ int main() {
 				std::cout << "3: ptr2int" << std::endl;
 				std::cout << "4: ptr2ptr" << std::endl;
 				std::cout << "5: ptr2ptr2ptr" << std::endl;
+				std::cout << "6: readPtrChain" << std::endl;
 				std::cin >> answer;
-				if ((answer <= 5) && (answer >= 0))
+				if ((answer <= 6) && (answer >= 0))
 					break;
 				std::cout << "Your answer is not recognized." << std::endl;
 			}
@@ -64,7 +87,7 @@ int main() {
 				std::cout << "intRead = " << intRead << std::endl;
 				break;
 			case 1:
-				if (ReadProcessMemory(handle, lpcvBasePointer, lpvCplusplusString, CplusplusStringRead.size(), NULL) == NULL) {//https://msdn.microsoft.com/en-us/library/windows/desktop/ms680553(v=vs.85).aspx
+				if (ReadProcessMemory(handle, lpcvBasePointer, lpvCplusplusString, sizeof(std::string)*128, NULL) == NULL) {//https://msdn.microsoft.com/en-us/library/windows/desktop/ms680553(v=vs.85).aspx
 					std::cout << "ReadProcessMemory failed. Error code : " << GetLastError() << std::endl;
 					CloseHandle(handle);
 					return 0;
@@ -102,6 +125,11 @@ int main() {
 					return 0;
 				}
 				std::cout << "ptr2ptr2ptrRead = " << ptr2ptr2ptrRead << std::endl;
+				break;
+			case 6:
+				DWORD  healthOffsets[] = { 0x58,0xA0, 0x108,0x38,0x8,0x18,0x5C };
+				valueToRead = findPointerAddress(7, handle, healthOffsets, addressToRead);
+				std::cout << "ValueOfChain = " << *&valueToRead << std::endl;
 				break;
 			}
 			CloseHandle(handle);
