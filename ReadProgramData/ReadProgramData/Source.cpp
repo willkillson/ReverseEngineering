@@ -12,8 +12,20 @@
 
 
 typedef uint64_t QWORD;
+float getFloatUsingAddress(QWORD bp, HANDLE hProcess) {
+	bool fail_flag = false;
 
-int getValueUsingPtrChain(QWORD bp, QWORD healthOffsets[], int depth, HANDLE hProcess) {
+	float inRead = 0;
+	LPVOID lpvBuffer = &inRead;
+
+	ReadProcessMemory(hProcess, (LPCVOID)bp, lpvBuffer, sizeof(float), NULL);
+
+
+	return inRead;
+
+
+}
+int getValueUsingPtrChain(QWORD bp, QWORD Offsets[], int depth, HANDLE hProcess) {
 
 	bool fail_flag = false;
 
@@ -28,7 +40,7 @@ int getValueUsingPtrChain(QWORD bp, QWORD healthOffsets[], int depth, HANDLE hPr
 	//std::cout << std::hex << basePointer << std::endl;
 
 	for (int i = 0; i < depth; i++) {
-		basePointer += healthOffsets[i];
+		basePointer += Offsets[i];
 
 		//std::cout << std::hex << std::uppercase << basePointer << '\t';
 		ReadProcessMemory(hProcess, (LPCVOID)basePointer, lpvBuffer, sizeof(QWORD), NULL);
@@ -39,6 +51,8 @@ int getValueUsingPtrChain(QWORD bp, QWORD healthOffsets[], int depth, HANDLE hPr
 
 
 
+	if (fail_flag)
+		std::cout << "getValueUsingPtrChain: failed" << std::endl;
 
 	return (int)readAddress;
 }
@@ -85,9 +99,16 @@ int main() {
 
 	QWORD basePointer = 0x7FF7B43C5CB8;
 	QWORD healthOffsets[] = { 0x58, 0xA0, 0x108, 0x38, 0x8, 0x18, 0x5C };
+
+	//QWORD neSw = basePointer + 0x230;
+
 	while (1) {
 		int hp = getValueUsingPtrChain(basePointer, healthOffsets, 7, hProcess);
+		int neSw = getFloatUsingAddress(basePointer + 0x230, hProcess);
+		int nwSe = getFloatUsingAddress(basePointer + 0x234, hProcess);
 		std::cout << std::dec << hp << std::endl;
+		std::cout << std::dec << neSw << std::endl;
+		std::cout << std::dec << nwSe << std::endl;
 		Sleep(100);
 	}
 
