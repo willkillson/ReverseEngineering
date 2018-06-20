@@ -1,6 +1,8 @@
 #include <iostream>
 #include <Windows.h>
 
+
+
 //#define TARGET_X64
 //
 //#ifdef TARGET_X64
@@ -56,8 +58,42 @@ int getValueUsingPtrChain(QWORD bp, QWORD Offsets[], int depth, HANDLE hProcess)
 
 	return (int)readAddress;
 }
+void clearScreen(int x, int y) {
+
+	HANDLE hOut;
+	COORD Position;
+
+	hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+
+	Position.X = x;
+	Position.Y = y;
+	SetConsoleCursorPosition(hOut, Position);
 
 
+	HANDLE consoleHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+	CONSOLE_CURSOR_INFO info;
+	info.dwSize = 100;
+	info.bVisible = FALSE;
+	SetConsoleCursorInfo(consoleHandle, &info);
+}
+void clearScreen() {
+
+	HANDLE hOut;
+	COORD Position;
+
+	hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+
+	Position.X = 0;
+	Position.Y = 0;
+	SetConsoleCursorPosition(hOut, Position);
+
+
+	HANDLE consoleHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+	CONSOLE_CURSOR_INFO info;
+	info.dwSize = 100;
+	info.bVisible = FALSE;
+	SetConsoleCursorInfo(consoleHandle, &info);
+}
 
 int main() {
 
@@ -106,10 +142,21 @@ int main() {
 		int hp = getValueUsingPtrChain(basePointer, healthOffsets, 7, hProcess);
 		int neSw = getFloatUsingAddress(basePointer + 0x230, hProcess);
 		int nwSe = getFloatUsingAddress(basePointer + 0x234, hProcess);
+
+		//GET_X_LPARAM(lParm);
+
+		clearScreen();
+		std::cout << "                                                    " << std::endl;
+		std::cout << "                                                    " << std::endl;
+		std::cout << "                                                    " << std::endl;
+		std::cout << "                                                    " << std::endl;
+		std::cout << "                                                    " << std::endl;
+		clearScreen();
+
 		std::cout << std::dec << hp << std::endl;
 		std::cout << std::dec << neSw << std::endl;
 		std::cout << std::dec << nwSe << std::endl;
-		Sleep(100);
+		Sleep(200);
 	}
 
 	std::cin.ignore();
