@@ -7,5 +7,9 @@
 int main() {
 
 	WindowHandler game("Path of Exile");
+	game.debug = true;
+	game.readData();
+
+
 
 }

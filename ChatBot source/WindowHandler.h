@@ -1,6 +1,7 @@
 #include <iostream>
 #include <Windows.h>
 #include <WinUser.h>
+#include <vector>
 
 #include "Psapi.h" //https://docs.microsoft.com/en-us/windows/desktop/api/psapi/nf-psapi-enumprocessmodules
 #pragma once
@@ -14,8 +15,18 @@ class WindowHandler {
 	
 	*/
 
-public:
-	//Variables
+public:		//Variables
+
+	//settings
+	bool debug;
+
+	//data
+	const static int MAX_CHAT_SIZE = 578;
+	char chat[MAX_CHAT_SIZE];
+
+private:	//variables
+
+	//WindowsSpecific
 	DWORD processID;
 	HANDLE hProcess;
 	LPCTSTR LGameWindow;
@@ -23,16 +34,11 @@ public:
 
 	//OffSets
 	QWORD   baseAddress;
-	QWORD	basePointerOffset = 0x01C880B0;
+	QWORD	basePointerOffset = 0x01C8EB10;
 
-	QWORD messageOffsets[4] = { 0x188, 0x108, 0x0, 0x0 };
+	vector<QWORD> messageOffsets = { 0x68, 0x0, 0x0 };
 
-	//data
-	const static int MAX_CHAT_SIZE = 578;
-	char chat[MAX_CHAT_SIZE];
-
-public:
-	//Functions
+public:		//Functions
 	WindowHandler(string windowTitle);
 	~WindowHandler();
 
@@ -40,14 +46,16 @@ public:
 
 
 
-private:
-	//Functions
+private:	//Functions
 	void getValueUsingPtrChain();
+	void getBasePointer();
 
 
 };
 
 WindowHandler::WindowHandler(string windowTitle) {
+	debug = false;//default debug
+
 	LGameWindow = windowTitle.c_str();
 	hGameWindow = FindWindow(NULL, LGameWindow);
 
@@ -69,6 +77,7 @@ WindowHandler::WindowHandler(string windowTitle) {
 
 	}
 
+	getBasePointer();
 
 }
 
@@ -84,32 +93,79 @@ void WindowHandler::readData()
 
 void WindowHandler::getValueUsingPtrChain()
 {
+
+	if (debug)
+		std::cout << std::hex << std::uppercase <<"["<< this->baseAddress << " + " << this->basePointerOffset << "]" << '\t'<< "->"<<'\t';
+
 	QWORD readAddress = 0;
 	QWORD basePointer = this->baseAddress + this->basePointerOffset;
 	LPVOID lpvBuffer = &readAddress;
 
-	std::cout << std::hex << std::uppercase << basePointer << '\t';
 	ReadProcessMemory(hProcess, (LPCVOID)basePointer, lpvBuffer, sizeof(QWORD), NULL);
 	basePointer = readAddress;
-	std::cout << std::hex << basePointer << std::endl;
+
+	if (debug)
+		std::cout << std::hex << basePointer << std::endl;
 
 
-	for (int i = 0; i < 4 - 1; i++) {
+	for (int i = 0; i < this->messageOffsets.size() - 1; i++) {
 		basePointer += messageOffsets[i];
 
-		std::cout << std::hex << std::uppercase << '[' << basePointer << " + " << messageOffsets[i] << ']' << '\t';
+		if (debug)		
+			std::cout << std::hex << std::uppercase << '[' << basePointer << " + " << messageOffsets[i] << ']' << "\t\t" << "->" << '\t';
+
 		ReadProcessMemory(hProcess, (LPCVOID)basePointer, lpvBuffer, sizeof(QWORD), NULL);
 		basePointer = readAddress;
-		std::cout << std::hex << basePointer << std::endl;
+
+		if (debug)
+			std::cout << std::hex << basePointer << std::endl;
 
 	}
 
 	char stringBuffer[578];
 	LPVOID pStringBuffer = &stringBuffer;
 
-	basePointer += messageOffsets[3 - 1];
+	basePointer += messageOffsets[this->messageOffsets.size()-1];
 	ReadProcessMemory(hProcess, (LPCVOID)basePointer, pStringBuffer, sizeof(char) * 578, NULL);
 
-	std::cout << stringBuffer;
+	if (debug)
+		std::cout <<"\nContents" << endl <<  stringBuffer << endl;
+
+}
+
+inline void WindowHandler::getBasePointer()
+{
+
+	HMODULE*	moduleArray;
+	LPBYTE      moduleArrayBytes;
+	DWORD       bytesRequired;
+
+
+	if (this->hProcess)
+	{
+		if (EnumProcessModules(this->hProcess, NULL, 0, &bytesRequired))
+		{
+			if (bytesRequired)
+			{
+				moduleArrayBytes = (LPBYTE)LocalAlloc(LPTR, bytesRequired);
+
+				if (moduleArrayBytes)
+				{
+					unsigned int moduleCount;
+
+					moduleCount = bytesRequired / sizeof(HMODULE);
+					moduleArray = (HMODULE*)moduleArrayBytes;
+
+					if (EnumProcessModules(this->hProcess, moduleArray, bytesRequired, &bytesRequired))
+					{
+						baseAddress = (DWORD_PTR)moduleArray[0];
+					}
+
+					LocalFree(moduleArrayBytes);
+				}
+			}
+		}
+	}
+
 
 }
