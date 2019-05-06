@@ -1,5 +1,6 @@
 #include <iostream>
 #include <Windows.h>
+#include <WinUser.h>
 
 
 
@@ -12,7 +13,7 @@
 //typedef unsigned int addr_ptr;
 //#endif
 
-
+using namespace std;
 
 typedef uint64_t QWORD;
 float getFloatUsingAddress(QWORD bp, HANDLE hProcess) {
@@ -103,6 +104,25 @@ void clearScreen() {
 	SetConsoleCursorInfo(consoleHandle, &info);
 }
 
+void printChat(char *message) {
+
+
+	string m(message);
+
+	auto itb = m.begin();
+	auto ite = m.end();
+
+	m.replace(itb+20, itb + 54, "");
+
+	while (*itb != '\n'&& itb<ite) {
+		printf("%c", *itb);
+		itb++;
+	}
+
+	printf("\n");
+
+}
+
 int main() {
 
 
@@ -148,11 +168,14 @@ int main() {
 	char chat[578];
 	char newChat[578];	
 
+	EnableWindow(hGameWindow, true);
+	//SendInput()
 	while (1) 
 	{
 		strcpy_s(newChat, getValueUsingPtrChain(basePointer, healthOffsets, 4, hProcess));
 		if (strcmp(chat, newChat) != 0) {
-			std::cout << newChat;
+		
+			printChat(newChat);
 			strcpy_s(chat, getValueUsingPtrChain(basePointer, healthOffsets, 4, hProcess));
 		}
 		Sleep(200);
