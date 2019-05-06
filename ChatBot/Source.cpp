@@ -1,143 +1,165 @@
 #include <iostream>
 #include <Windows.h>
-#include <vector>
-#include "Psapi.h" //https://docs.microsoft.com/en-us/windows/desktop/api/psapi/nf-psapi-enumprocessmodules
-#include <tlhelp32.h>
-
-using namespace std;
 
 
-DWORD_PTR GetProcessBaseAddress(DWORD processID)
-{
-
-	/*
-		This code was lifted from,
-		https://stackoverflow.com/questions/26572459/c-get-module-base-address-for-64bit-application
-	*/
-
-	DWORD_PTR   baseAddress = 0;
-	HANDLE      processHandle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, processID);
-	HMODULE* moduleArray;
-	LPBYTE      moduleArrayBytes;
-	DWORD       bytesRequired;
-
-	if (processHandle)
-	{
-		if (EnumProcessModules(processHandle, NULL, 0, &bytesRequired))
-		{
-			if (bytesRequired)
-			{
-				moduleArrayBytes = (LPBYTE)LocalAlloc(LPTR, bytesRequired);
-
-				if (moduleArrayBytes)
-				{
-					unsigned int moduleCount;
-
-					moduleCount = bytesRequired / sizeof(HMODULE);
-					moduleArray = (HMODULE*)moduleArrayBytes;
-
-					if (EnumProcessModules(processHandle, moduleArray, bytesRequired, &bytesRequired))
-					{
-						baseAddress = (DWORD_PTR)moduleArray[0];
-					}
-
-					LocalFree(moduleArrayBytes);
-				}
-			}
-		}
-
-		CloseHandle(processHandle);
-	}
-
-	return baseAddress;
-}
-
-HWND GetWindowHandle(string pTitle) 
-{
-	/*
-		https://docs.microsoft.com/en-us/windows/desktop/api/winuser/nf-winuser-findwindowa
-
-		On success, this function returns the window handle.
-		On failure, this function returns 0
-	*/
 
 
-	HWND newWindow = FindWindow(0, pTitle.c_str());
+//#define TARGET_X64
+//
+//#ifdef TARGET_X64
+//typedef unsigned __int64 addr_ptr;
+//#else
+//typedef unsigned int addr_ptr;
+//#endif
 
-	if (newWindow == NULL) {
-		cout << "GetWindowHandle - failure" << endl;
-		return newWindow;
-	}
-	else
-	{
-		cout << "GetWindowHandle - success" << endl;
-		return newWindow;
-	}
+
+
+typedef uint64_t QWORD;
+float getFloatUsingAddress(QWORD bp, HANDLE hProcess) {
+	bool fail_flag = false;
+
+	float inRead = 0;
+	LPVOID lpvBuffer = &inRead;
+
+	ReadProcessMemory(hProcess, (LPCVOID)bp, lpvBuffer, sizeof(float), NULL);
+
+
+	return inRead;
+
 
 }
+char* getValueUsingPtrChain(QWORD bp, QWORD Offsets[], int depth, HANDLE hProcess) {
 
-DWORD GetProcessID(wstring pProcessName) {
+	bool fail_flag = false;
 
-	/*
-		Code was modified based off of. 
-		http://en.ciholas.fr/get-process-id-pid-from-process-name-string-c-windows-api/
-	
-	*/
+	QWORD readAddress = 0;
+	QWORD basePointer = bp;
 
-	vector<DWORD> pids;
-	wstring targetProcessName = pProcessName;
-	HANDLE snap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0); //all processes
+	LPVOID lpvBuffer = &readAddress;
 
-	PROCESSENTRY32W entry; //current process
-	entry.dwSize = sizeof entry;
+	//std::cout << std::hex << std::uppercase << basePointer << '\t';
+	ReadProcessMemory(hProcess, (LPCVOID)basePointer, lpvBuffer, sizeof(QWORD), NULL);
+	basePointer = readAddress;
+	//std::cout << std::hex << basePointer << std::endl;
 
-	if (!Process32FirstW(snap, &entry)) { //start with the first in snapshot
-		return 0;
+	for (int i = 0; i < depth-1; i++) {
+		basePointer += Offsets[i];
+
+		//std::cout << std::hex << std::uppercase <<'['<< basePointer <<" + " << Offsets[i]<<']' << '\t';
+		ReadProcessMemory(hProcess, (LPCVOID)basePointer, lpvBuffer, sizeof(QWORD), NULL);
+		basePointer = readAddress;
+		//std::cout << std::hex << basePointer << std::endl;
+
 	}
 
-	do {
-		if (std::wstring(entry.szExeFile) == targetProcessName) {
-			pids.emplace_back(entry.th32ProcessID); //name matches; add to list
-		}
-	} while (Process32NextW(snap, &entry)); //keep going until end of snapshot
+	char stringBuffer[578];
+	LPVOID pStringBuffer = &stringBuffer;
 
-	for (int i(0); i < pids.size(); ++i) {
-		std::cout << "GetProcessID - success" << std::endl;
-		return pids[0];
-	}
-	std::cout << "GetProcessID - failure" << std::endl;
-	return 0;
+	basePointer += Offsets[depth - 1];
+	ReadProcessMemory(hProcess, (LPCVOID)basePointer, pStringBuffer, sizeof(char)* 578, NULL);
 
+//	std::cout << stringBuffer;
+
+
+	if (fail_flag)
+		std::cout << "getValueUsingPtrChain: failed" << std::endl;
+
+	return stringBuffer;
+}
+void clearScreen(int x, int y) {
+
+	HANDLE hOut;
+	COORD Position;
+
+	hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+
+	Position.X = x;
+	Position.Y = y;
+	SetConsoleCursorPosition(hOut, Position);
+
+
+	HANDLE consoleHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+	CONSOLE_CURSOR_INFO info;
+	info.dwSize = 100;
+	info.bVisible = FALSE;
+	SetConsoleCursorInfo(consoleHandle, &info);
+}
+void clearScreen() {
+
+	HANDLE hOut;
+	COORD Position;
+
+	hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+
+	Position.X = 0;
+	Position.Y = 0;
+	SetConsoleCursorPosition(hOut, Position);
+
+
+	HANDLE consoleHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+	CONSOLE_CURSOR_INFO info;
+	info.dwSize = 100;
+	info.bVisible = FALSE;
+	SetConsoleCursorInfo(consoleHandle, &info);
 }
 
 int main() {
 
-	DWORD pid = GetProcessID(L"PathOfExile_x64.exe");
-	HWND window = GetWindowHandle("Path of Exile");
 
 
 
-	//DWORD_PTR baseAddress = GetProcessBaseAddress(pid);
 
-	//uintptr_t addressToRead = 0x29492EAE840;
-	//std::vector<DWORD> healthOffsets = { 0x188,0x100, 0x0 };
+	LPCTSTR LGameWindow = "Path of Exile";
+	HWND hGameWindow = FindWindow(NULL, LGameWindow);
+	if (!hGameWindow) {
+		std::cout << "Game not found. GetLastError = " << std::dec << GetLastError() << std::endl;
+		return EXIT_FAILURE;
+	}
+	std::cout << "Game found" << std::endl;
 
-	//LPVOID mArray = NULL;
-	//SIZE_T mArraySize = 600;
+	//Finding the processID of the game window
+	DWORD  processID = 9716;
+	GetWindowThreadProcessId(hGameWindow, &processID);
+	if (processID == NULL)
+	{
+		std::cout << "Getting window PID failed. GetLastError = " << std::dec << GetLastError() << std::endl;
+		system("pause > nul");
+		return EXIT_FAILURE;
+	}
+	std::cout << "Using PID : " << processID << std::endl;
+
+	//Opening a process to get the permissions to RPM or WPM
+	HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, processID);
+	if (hProcess == NULL)
+	{
+		std::cout << "OpenProcess failed. GetLastError = " << std::dec << GetLastError() << std::endl;
+		system("pause > nul");
+		return EXIT_FAILURE;
+	}
+	std::cout << "OpenProcess succeeded. (got the permission)." << std::endl;
 
 
+	///////////////////////////
 
-	//LPVOID valueToRead = NULL;
-
-	//HANDLE handle = OpenProcess(PROCESS_ALL_ACCESS, false, pid);// https://msdn.microsoft.com/en-us/library/windows/desktop/ms684320(v=vs.85).aspx
-
-	//if (handle == NULL) {
-	//	std::cout << "OpenProcess failed. Error code : " << GetLastError() << std::endl;
-	//	return 0;
-	//}
+	QWORD basePointer = 0x00007ff76b360000 + 0x01C880B0;
+	QWORD healthOffsets[] = { 0x188, 0x108, 0x0, 0x0};
 
 
-	//CloseHandle(handle);
+	char chat[578];
+	char newChat[578];	
 
-		
+	while (1) 
+	{
+		strcpy_s(newChat, getValueUsingPtrChain(basePointer, healthOffsets, 4, hProcess));
+		if (strcmp(chat, newChat) != 0) {
+			std::cout << newChat;
+			strcpy_s(chat, getValueUsingPtrChain(basePointer, healthOffsets, 4, hProcess));
+		}
+		Sleep(200);
+	}
+	
+
+	std::cin.ignore();
+
+
 }
