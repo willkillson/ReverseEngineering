@@ -12,8 +12,30 @@
 //#else
 //typedef unsigned int addr_ptr;
 //#endif
+//
+//typedef struct tagINPUT {
+//	DWORD type;
+//	union {
+//		MOUSEINPUT    mi;
+//		KEYBDINPUT    ki;
+//		HARDWAREINPUT hi;
+//	} DUMMYUNIONNAME;
+//} INPUT, * PINPUT, * LPINPUT;
+//
+//typedef struct tagKEYBDINPUT {
+//	WORD      wVk;
+//	WORD      wScan;
+//	DWORD     dwFlags;
+//	DWORD     time;
+//	ULONG_PTR dwExtraInfo;
+//} KEYBDINPUT, * PKEYBDINPUT, * LPKEYBDINPUT;
+
+
 
 using namespace std;
+
+INPUT ip;
+
 
 typedef uint64_t QWORD;
 float getFloatUsingAddress(QWORD bp, HANDLE hProcess) {
@@ -122,6 +144,17 @@ void printChat(char *message) {
 	printf("\n");
 
 }
+void press() {
+	// Press the "A" key
+	ip.ki.wVk = 0x0D; // virtual-key code for the "a" key
+	ip.ki.dwFlags = 0; // 0 for key press
+	SendInput(1, &ip, sizeof(INPUT));
+
+	// Release the "A" key
+	ip.ki.dwFlags = KEYEVENTF_KEYUP; // KEYEVENTF_KEYUP for key release
+	SendInput(1, &ip, sizeof(INPUT));
+}
+
 
 int main() {
 
@@ -168,15 +201,23 @@ int main() {
 	char chat[578];
 	char newChat[578];	
 
-	EnableWindow(hGameWindow, true);
-	//SendInput()
+
+	// Set up a generic keyboard event.
+	ip.type = INPUT_KEYBOARD;
+	ip.ki.wScan = 0; // hardware scan code for key
+	ip.ki.time = 0;
+	ip.ki.dwExtraInfo = 0;
+
+
+
+
 	while (1) 
 	{
 		strcpy_s(newChat, getValueUsingPtrChain(basePointer, healthOffsets, 4, hProcess));
 		if (strcmp(chat, newChat) != 0) {
-		
 			printChat(newChat);
 			strcpy_s(chat, getValueUsingPtrChain(basePointer, healthOffsets, 4, hProcess));
+			press();
 		}
 		Sleep(200);
 	}
