@@ -127,11 +127,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\ChatBot source\Source.cpp" />
-    <ClCompile Include="main.cpp" />
+    <ClInclude Include="..\..\..\ChatBot source\WindowHandler.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\ChatBot source\WindowHandler.h" />
+    <ClCompile Include="..\..\..\ChatBot source\main.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
