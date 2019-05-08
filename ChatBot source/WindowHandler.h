@@ -21,7 +21,7 @@ public:		//Variables
 	bool debug;
 
 	//data
-	const static int MAX_CHAT_SIZE = 578;
+	const static int MAX_CHAT_SIZE = 579;
 	char chat[MAX_CHAT_SIZE];
 
 private:	//variables
@@ -48,6 +48,7 @@ public:		//Functions
 
 private:	//Functions
 	void getValueUsingPtrChain();
+	void convertNewlineToNull(char *pString);
 	void getBasePointer();
 
 
@@ -91,6 +92,25 @@ void WindowHandler::readData()
 	getValueUsingPtrChain();
 }
 
+void WindowHandler::convertNewlineToNull(char* pString)
+{
+	bool fillRest = false;
+	char* itb = pString;
+	char* ite = pString + this->MAX_CHAT_SIZE;
+
+	while (itb < ite) {
+		if (fillRest == true) {
+			*itb = '\0';
+		}
+		if (*itb == '\n') {
+			*itb = '\0';
+			fillRest = true;
+		}
+		itb++;
+	}
+
+}
+
 void WindowHandler::getValueUsingPtrChain()
 {
 
@@ -122,15 +142,13 @@ void WindowHandler::getValueUsingPtrChain()
 
 	}
 
-	char stringBuffer[578];
-	LPVOID pStringBuffer = &stringBuffer;
+	LPVOID pStringBuffer = &chat;
 
 	basePointer += messageOffsets[this->messageOffsets.size()-1];
-	ReadProcessMemory(hProcess, (LPCVOID)basePointer, pStringBuffer, sizeof(char) * 578, NULL);
+	ReadProcessMemory(hProcess, (LPCVOID)basePointer, pStringBuffer, sizeof(char) * MAX_CHAT_SIZE-1, NULL);
+	this->chat[MAX_CHAT_SIZE-1] = '\0';
 
-	if (debug)
-		std::cout <<"\nContents" << endl <<  stringBuffer << endl;
-
+	convertNewlineToNull(this->chat);
 }
 
 inline void WindowHandler::getBasePointer()

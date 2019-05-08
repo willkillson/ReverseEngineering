@@ -18,6 +18,12 @@
     <ClInclude Include="..\..\..\ChatBot source\WindowHandler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\ChatBot source\InputOutputHandler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ChatBot source\kmw.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\ChatBot source\main.cpp">

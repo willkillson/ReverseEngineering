@@ -127,6 +127,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\ChatBot source\InputOutputHandler.h" />
+    <ClInclude Include="..\..\..\ChatBot source\kmw.h" />
     <ClInclude Include="..\..\..\ChatBot source\WindowHandler.h" />
   </ItemGroup>
   <ItemGroup>
